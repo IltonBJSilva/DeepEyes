@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from models import db, Annotation
-from search_index import search_in_embeddings
 
 # ----- CONFIGURAÇÃO SIMULADA -----
 SQLALCHEMY_DATABASE_URI = "sqlite:///test.db"
@@ -18,8 +17,18 @@ app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # ----- DB & CORS -----
-db.init_app(app)
+db = SQLAlchemy(app)
 CORS(app)
+
+# ----- MODELO -----
+class Annotation(db.Model):
+    __tablename__ = "annotations"
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(500))
+
+# ----- FUNÇÃO SIMULADA DE BUSCA -----
+def search_in_embeddings(query):
+    return [{"id": 1, "text": f"Resultado simulado para '{query}'"}]
 
 # ⚡ Cria tabelas no contexto do app
 with app.app_context():
