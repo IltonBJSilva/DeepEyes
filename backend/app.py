@@ -3,6 +3,8 @@ from flask_cors import CORS
 from config import SQLALCHEMY_DATABASE_URI, SECRET_KEY
 from models import db, Annotation
 from search_index import search_in_embeddings
+from .config import SQLALCHEMY_DATABASE_URI, SECRET_KEY
+import os
 
 app = Flask(__name__, template_folder="../frontend/templates", static_folder="../frontend/static")
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
