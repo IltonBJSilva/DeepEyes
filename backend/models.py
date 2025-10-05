@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -8,7 +9,6 @@ class Annotation(db.Model):
     __tablename__ = "annotations"
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(500))
-    # opcional: associar a uma imagem geoespacial
     image_id = db.Column(db.Integer, db.ForeignKey("satellite_images.id"), nullable=True)
 
 
@@ -16,12 +16,23 @@ class Annotation(db.Model):
 class SatelliteImage(db.Model):
     __tablename__ = "satellite_images"
     id = db.Column(db.Integer, primary_key=True)
-    # localizacao geoespacial (POINT)
     location = db.Column(Geometry("POINT"))
     description = db.Column(db.String(500))
-    # campos extras que podem ser úteis
     timestamp = db.Column(db.DateTime)
-    source = db.Column(db.String(100))  # ex: NASA, INPE, TESS, etc.
-    
-    # relacionamento com annotations
+    source = db.Column(db.String(100))
+    url = db.Column(db.String(300), nullable=True)  # link da imagem
     annotations = db.relationship("Annotation", backref="image", lazy=True)
+
+
+
+# ----- Cache de imagens -----
+class ImageCache(db.Model):
+    """
+    Tabela simples pra controle do cache (opcional),
+    útil pra mapear o que está no Redis.
+    """
+    __tablename__ = "image_cache"
+    id = db.Column(db.Integer, primary_key=True)
+    image_id = db.Column(db.Integer, db.ForeignKey("satellite_images.id"), unique=True)
+    cached_key = db.Column(db.String(200), unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

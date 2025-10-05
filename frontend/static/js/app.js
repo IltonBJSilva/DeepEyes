@@ -1,41 +1,40 @@
 async function doSearch() {
     const query = document.getElementById("searchBox").value;
-    const response = await fetch(`/api/search?q=${query}`);
-    const data = await response.json();
+    const resultsList = document.getElementById("results");
+    resultsList.innerHTML = "<li class='list-group-item'>Buscando...</li>";
 
-    const list = document.getElementById("results");
-    list.innerHTML = "";
-    data.results.forEach(r => {
-        const li = document.createElement("li");
-        li.className = "list-group-item";
-        li.innerText = r;
-        list.appendChild(li);
-    });
+    try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+
+        resultsList.innerHTML = "";
+        if (data.results.length === 0) {
+            resultsList.innerHTML = "<li class='list-group-item'>Nenhum resultado encontrado.</li>";
+            return;
+        }
+
+        data.results.forEach(item => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+
+            // Texto
+            const textNode = document.createElement("p");
+            textNode.textContent = item.text;
+            li.appendChild(textNode);
+
+            // Imagem, se existir
+            if (item.image_url) {
+                const img = document.createElement("img");
+                img.src = item.image_url;
+                img.className = "img-fluid mt-2";
+                img.style.maxHeight = "300px";
+                li.appendChild(img);
+            }
+
+            resultsList.appendChild(li);
+        });
+    } catch (err) {
+        console.error(err);
+        resultsList.innerHTML = "<li class='list-group-item text-danger'>Erro ao buscar!</li>";
+    }
 }
-
-async function loadAnnotations() {
-    const response = await fetch("/api/annotations");
-    const data = await response.json();
-    const list = document.getElementById("annotations");
-    list.innerHTML = "";
-    data.forEach(a => {
-        const li = document.createElement("li");
-        li.className = "list-group-item";
-        li.innerText = a.text;
-        list.appendChild(li);
-    });
-}
-
-async function addAnnotation() {
-    const text = document.getElementById("annotationText").value;
-    if(!text) return;
-    await fetch("/api/annotations", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({text})
-    });
-    document.getElementById("annotationText").value = "";
-    loadAnnotations();
-}
-
-window.onload = loadAnnotations;
