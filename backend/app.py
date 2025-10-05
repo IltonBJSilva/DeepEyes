@@ -6,9 +6,7 @@ from sqlalchemy import text
 import base64
 import requests
 from datetime import datetime
-import json
 import redis
-
 
 # ----- CONFIGURAÇÃO -----
 SQLALCHEMY_DATABASE_URI = (
@@ -16,14 +14,10 @@ SQLALCHEMY_DATABASE_URI = (
     "?sslmode=require&channel_binding=require"
 )
 SECRET_KEY = "teste123"
-NASA_API_KEY = "2lKrd3NQRCRAadHid5sSA7k0P0pZW5uwr4Lca7BU"  # Substitua pelo seu API Key real
+NASA_API_KEY = "2lKrd3NQRCRAadHid5sSA7k0P0pZW5uwr4Lca7BU"
 
-# URL do Redis remoto (a que você pegou do site)
 REDIS_URL = "redis://default:OFYDnlCkLdDclP5ISQfHY8v974FK23m4@redis-18735.c336.samerica-east1-1.gce.redns.redis-cloud.com:18735"
-
-# Conexão
 r = redis.Redis.from_url(REDIS_URL)
-
 
 # ----- APP FLASK -----
 app = Flask(
@@ -44,29 +38,20 @@ with app.app_context():
         conn.commit()
     db.create_all()
 
-
-
-
+# 🔹 Funções de cache
 def get_cached_image(key):
-    """Pega imagem do Redis pelo cache"""
     cached = r.get(key)
-    if cached:
-        return cached
-    return None
+    return cached if cached else None
 
 def set_cached_image(key, img_bytes, expire=3600):
-    """Salva imagem no Redis com tempo de expiração em segundos (padrão: 1h)"""
     r.set(key, img_bytes, ex=expire)
 
-
-
+# 🔹 Teste Redis
 @app.route("/api/redis-test")
 def redis_test():
     try:
-        # Testa se o Redis responde
         if r.ping():
-            # Testa salvar e ler um valor
-            r.set("flask_test", "ok", ex=10)  # expira em 10 segundos
+            r.set("flask_test", "ok", ex=10)
             value = r.get("flask_test")
             return jsonify({"status": "Redis funcionando ✅", "valor_teste": value.decode("utf-8")})
         else:
@@ -74,27 +59,12 @@ def redis_test():
     except Exception as e:
         return jsonify({"status": "Erro ao conectar Redis ❌", "erro": str(e)})
 
-
-
-
-# =========================================================
-# 🔹 FUNÇÕES AUXILIARES
-# =========================================================
+# 🔹 Auxiliares
 def image_to_base64(img_bytes):
     return base64.b64encode(img_bytes).decode("utf-8")
 
-
-
-
-
-# =========================================================
-# 🔹 FUNÇÃO DE BUSCA NASA
-# =========================================================
+# 🔹 Busca NASA
 def search_in_embeddings(query, max_results=5):
-    """
-    Busca imagens reais na NASA Image and Video Library ou APOD,
-    filtrando concept art, IA e imagens de divulgação.
-    """
     query_lower = query.lower()
     results = []
 
@@ -120,13 +90,11 @@ def search_in_embeddings(query, max_results=5):
                 title = data.get("title", "Sem título")
                 description = data.get("description", "").lower()
 
-                # Filtra concept art / IA
                 if any(word in title.lower() for word in forbidden_keywords):
                     continue
                 if any(word in description for word in forbidden_keywords):
                     continue
 
-                # Pega o link da imagem
                 links = item.get("links", [{}])
                 image_url = None
                 for link in links:
@@ -161,30 +129,17 @@ def search_in_embeddings(query, max_results=5):
 
     return results
 
-
-# =========================================================
-# 🔹 FRONTEND
-# =========================================================
+# 🔹 Frontend
 @app.route("/")
 def home():
     return render_template("index2.html")
 
-# =========================================================
-# 🔹 API HEALTH
-# =========================================================
-@app.route("/api/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "Flask API DeepEyes UP!"})
-
-# =========================================================
-# 🔹 API SEARCH
-# =========================================================
+# 🔹 API Search
 @app.route("/api/search", methods=["GET"])
 def search():
     query = request.args.get("q", "")
     results = search_in_embeddings(query, max_results=10)
     return jsonify({"results": results})
-
 
 @app.route("/api/annotations", methods=["GET", "POST"])
 def annotations_route():
@@ -198,21 +153,20 @@ def annotations_route():
         db.session.commit()
         return jsonify({"status": "annotation added"})
 
-
 @app.route("/api/images", methods=["GET", "POST"])
 def images_route():
     if request.method == "GET":
         images_list = []
         for img in SatelliteImage.query.all():
             cache_key = f"image:{img.id}"
-            cached = get_cached_image(cache_key)  # Presume que você tem essa função
+            cached = get_cached_image(cache_key)
             if cached:
                 img_base64 = image_to_base64(cached)
                 cached_flag = True
             elif img.url:
                 response = requests.get(img.url)
                 img_bytes = response.content
-                set_cached_image(cache_key, img_bytes)  # Presume que você tem essa função
+                set_cached_image(cache_key, img_bytes)
                 img_base64 = image_to_base64(img_bytes)
                 cached_flag = False
             else:
@@ -243,30 +197,16 @@ def images_route():
         db.session.commit()
         return jsonify({"status": "image added"})
 
-
-# =========================================================
-# 🔹 FRONTEND
-# =========================================================
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-# =========================================================
-# 🔹 HEALTH CHECK
-# =========================================================
+# 🔹 Health Check
 @app.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "Flask API DeepEyes UP!"})
 
-
-# =========================================================
-# 🔹 API NASA DIVERSOS
-# =========================================================
+# 🔹 API NASA Diversos
 @app.route("/api/nasa/<string:dataset>", methods=["GET"])
 def fetch_nasa_data(dataset):
     cache_key = f"nasa:{dataset}"
-    cached = get_cached_image(cache_key)  # Presume função de cache
+    cached = get_cached_image(cache_key)
     if cached:
         return jsonify(eval(cached.decode("utf-8")))
 
@@ -301,9 +241,6 @@ def fetch_nasa_data(dataset):
     set_cached_image(cache_key, str(result).encode("utf-8"))
     return jsonify(result)
 
-
-# =========================================================
-# ----- RODAR LOCAL -----
-# =========================================================
+# 🔹 Rodar Local
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
