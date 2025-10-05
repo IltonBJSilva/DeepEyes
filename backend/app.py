@@ -8,6 +8,7 @@ import requests
 from datetime import datetime
 import json
 import redis
+import os
 
 
 # ----- CONFIGURAÇÃO -----
@@ -28,8 +29,8 @@ r = redis.Redis.from_url(REDIS_URL)
 # ----- APP FLASK -----
 app = Flask(
     __name__,
-    template_folder="../frontend/templates",
-    static_folder="../frontend/static"
+    static_folder=os.path.join('..', 'frontend', 'static'),
+    template_folder=os.path.join('..', 'frontend', 'templates')
 )
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SECRET_KEY'] = SECRET_KEY
@@ -58,7 +59,73 @@ def set_cached_image(key, img_bytes, expire=3600):
     """Salva imagem no Redis com tempo de expiração em segundos (padrão: 1h)"""
     r.set(key, img_bytes, ex=expire)
 
+# =========================================================
+# 🔹 ENDPOINT PARA IMAGENS DA GALERIA NASA
+# =========================================================
+@app.route("/api/nasa-gallery", methods=["GET"])
+def nasa_gallery():
+    """
+    Retorna imagens reais da NASA para a galeria frontend
+    """
+    try:
+        # Busca imagens reais da NASA para temas espaciais
+        search_terms = ["moon", "mars", "nebula", "galaxy", "solar system", "earth from space"]
+        gallery_images = []
+        
+        for term in search_terms:
+            results = search_in_embeddings(term, max_results=2)
+            for result in results:
+                if result.get("image_url"):
+                    gallery_images.append({
+                        "id": f"{term}_{result['id']}",
+                        "title": result["text"],
+                        "image_url": result["image_url"],
+                        "description": f"NASA Image - {term.title()}",
+                        "type": term
+                    })
+        
+        # Se não encontrou imagens, usa APOD como fallback
+        if not gallery_images:
+            apod_data = requests.get(f"https://api.nasa.gov/planetary/apod?api_key={NASA_API_KEY}&count=6").json()
+            for i, item in enumerate(apod_data):
+                if item.get("url"):
+                    gallery_images.append({
+                        "id": f"apod_{i}",
+                        "title": item.get("title", "NASA Astronomy Picture"),
+                        "image_url": item.get("url"),
+                        "description": item.get("explanation", "NASA Image")[:100] + "...",
+                        "type": "apod"
+                    })
+        
+        return jsonify({"images": gallery_images[:6]})  # Limita a 6 imagens
+    
+    except Exception as e:
+        return jsonify({"error": str(e), "images": []})
 
+@app.route("/api/nasa-random", methods=["GET"])
+def nasa_random_image():
+    """
+    Retorna uma imagem aleatória da NASA
+    """
+    try:
+        # Busca uma imagem aleatória usando APOD
+        apod_data = requests.get(f"https://api.nasa.gov/planetary/apod?api_key={NASA_API_KEY}").json()
+        
+        if isinstance(apod_data, list):
+            apod_data = apod_data[0]
+            
+        return jsonify({
+            "image": {
+                "id": "random_apod",
+                "title": apod_data.get("title", "NASA Astronomy Picture"),
+                "image_url": apod_data.get("url"),
+                "description": apod_data.get("explanation", "NASA Image")[:150] + "...",
+                "type": "apod"
+            }
+        })
+    
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @app.route("/api/redis-test")
 def redis_test():
@@ -235,6 +302,10 @@ def images_route():
 # =========================================================
 @app.route("/")
 def home():
+    return render_template("index2.html")
+
+@app.route("/teste")
+def feature():
     return render_template("index.html")
 
 

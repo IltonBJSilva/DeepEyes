@@ -1,60 +1,459 @@
-<!doctype html>
-<html lang="pt-BR" class="h-100" data-bs-theme="auto">
+<!DOCTYPE html>
+<html lang="pt-br">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cover Template · Bootstrap</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Universe Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <!-- Flask/Django: usar url_for ou static -->
-    <link href="{{ url_for('static', filename='assets/dist/css/bootstrap.min.css') }}" rel="stylesheet" />
-    <link href="{{ url_for('static', filename='css/style2.css') }}" rel="stylesheet" />
-    <script src="{{ url_for('static', filename='assets/js/color-modes.js') }}"></script>
-    <meta name="theme-color" content="#712cf9" />
+        body {
+            background: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            padding: 2rem;
+        }
+
+        .title {
+            font-size: 32px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: normal;
+        }
+
+        .search-text {
+            font-size: 18px;
+            margin-bottom: 40px;
+        }
+
+        .blocks-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .block {
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+        }
+
+        .block img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .block img:hover {
+            transform: scale(1.05);
+        }
+
+        .block-title {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #ccc;
+            font-weight: bold;
+        }
+
+        .block-description {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .look-for {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            background: #111;
+            color: white;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #555;
+        }
+
+        .search-btn {
+            background: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            color: #000;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .search-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .search-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .suggestions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-btn {
+            background: #333;
+            border: 1px solid #555;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #ccc;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-btn:hover {
+            background: #444;
+            color: white;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #555;
+            margin: 30px 0;
+        }
+
+        footer {
+            color: #888;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .browser-info {
+            margin-top: 40px;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .loading {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .error {
+            color: #ff6b6b;
+            font-style: italic;
+        }
+
+        .image-placeholder {
+            width: 300px;
+            height: 200px;
+            background: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: #666;
+        }
+
+        .search-results-info {
+            margin-bottom: 20px;
+            color: #ccc;
+            font-size: 16px;
+        }
+
+        .reset-search {
+            background: transparent;
+            border: 1px solid #666;
+            color: #666;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-search:hover {
+            border-color: #888;
+            color: #888;
+        }
+    </style>
 </head>
 
-<body class="d-flex h-100 text-center text-bg-dark">
-    <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
-        <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center" id="bd-theme" type="button"
-            data-bs-toggle="dropdown" aria-label="Toggle theme (auto)">
-            <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
-            <li><button type="button" class="dropdown-item" data-bs-theme-value="light">Light</button></li>
-            <li><button type="button" class="dropdown-item" data-bs-theme-value="dark">Dark</button></li>
-            <li><button type="button" class="dropdown-item active" data-bs-theme-value="auto">Auto</button></li>
-        </ul>
+<body>
+    <div class="container">
+        <div class="title">Da ciência à descoberta interativa</div>
+
+        <div class="subtitle">Explorando o Universo em Terapixels</div>
+
+        <div class="search-text">Busque por crateras, tempestades, constelações...</div>
+
+        <!-- Barra de Pesquisa -->
+        <div class="look-for">O que você quer explorar?</div>
+        
+        <div class="search-container">
+            <input type="text" 
+                   class="search-input" 
+                   id="search-input" 
+                   placeholder="Ex: lua, marte, nebulosa, galáxia..."
+                   onkeypress="handleKeyPress(event)">
+            <button class="search-btn" id="search-btn" onclick="searchNASAImages()">
+                🔍 Buscar
+            </button>
+        </div>
+
+        <!-- Sugestões de Busca -->
+        <div class="suggestions">
+            <button class="suggestion-btn" onclick="setSearchTerm('moon')">🌙 Lua</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('mars')">🔴 Marte</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('nebula')">🌌 Nebulosa</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('galaxy')">🌀 Galáxia</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('earth')">🌍 Terra</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('apod')">🛰️ APOD</button>
+        </div>
+
+        <!-- Informações dos Resultados -->
+        <div class="search-results-info" id="results-info"></div>
+
+        <!-- Galeria de Imagens -->
+        <div class="blocks-container" id="images-container">
+            <div class="loading">Carregando imagens da NASA...</div>
+        </div>
+
+        <hr>
+
+        <footer>Fonte e imagens © NASA - Domínio Público</footer>
+
+        <hr>
+
+        <div class="browser-info">
+            <div id="browser-name">Navegador: Detectando...</div>
+            <div>Origem: NASA Universe Explorer</div>
+        </div>
     </div>
 
-    <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
-        <header class="mb-auto">
-            <div>
-                <h3 class="float-md-start mb-0">Cover</h3>
-                <nav class="nav nav-masthead justify-content-center float-md-end">
-                    <a class="nav-link active" href="#">Home</a>
-                    <a class="nav-link" href="#">Features</a>
-                    <a class="nav-link" href="#">Contact</a>
-                </nav>
-            </div>
-        </header>
+    <script>
+        let currentSearchTerm = '';
+        let isLoading = false;
 
-        <main class="px-3">
-            <h1>Cover your page.</h1>
-            <p class="lead">Cover é um template de uma página para criar páginas iniciais simples e bonitas.</p>
-            <p class="lead">
-                <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white">Saiba mais</a>
-            </p>
-        </main>
+        // Carregar imagens quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDefaultGallery();
+            detectBrowser();
+        });
 
-        <footer class="mt-auto text-white-50">
-            <p>
-                Template por <a href="https://getbootstrap.com/" class="text-white">Bootstrap</a>,
-                adaptado por <a href="#" class="text-white">você</a>.
-            </p>
-        </footer>
-    </div>
+        // Função para carregar galeria padrão
+        function loadDefaultGallery() {
+            const loadingElement = document.getElementById('images-container');
+            loadingElement.innerHTML = '<div class="loading">Carregando imagens incríveis da NASA...</div>';
+            document.getElementById('results-info').innerHTML = '';
 
-    <script src="{{ url_for('static', filename='assets/dist/js/bootstrap.bundle.min.js') }}"></script>
+            fetch('/api/nasa-gallery')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao carregar galeria NASA');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.images && data.images.length > 0) {
+                        displayNASAImages(data.images);
+                        document.getElementById('results-info').innerHTML = 
+                            '📸 <strong>Imagens em Destaque da NASA</strong>';
+                    } else {
+                        throw new Error('Nenhuma imagem encontrada');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    document.getElementById('images-container').innerHTML = 
+                        '<div class="error">Erro ao carregar imagens da NASA</div>';
+                });
+        }
+
+        // Função para buscar imagens
+        function searchNASAImages() {
+            const searchInput = document.getElementById('search-input');
+            const searchTerm = searchInput.value.trim();
+            
+            if (!searchTerm) {
+                alert('Por favor, digite algo para buscar');
+                return;
+            }
+
+            if (isLoading) return;
+            
+            isLoading = true;
+            currentSearchTerm = searchTerm;
+            
+            const btn = document.getElementById('search-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Buscando...';
+            btn.disabled = true;
+
+            const loadingElement = document.getElementById('images-container');
+            loadingElement.innerHTML = '<div class="loading">Buscando imagens para: "' + searchTerm + '"...</div>';
+
+            fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro na busca');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        // Filtra apenas resultados com imagens
+                        const imagesWithUrls = data.results.filter(result => result.image_url);
+                        
+                        if (imagesWithUrls.length > 0) {
+                            displayNASAImages(imagesWithUrls.map(result => ({
+                                id: result.id,
+                                title: result.text,
+                                image_url: result.image_url,
+                                description: `Resultado da busca: ${searchTerm}`,
+                                type: 'search'
+                            })));
+                            
+                            document.getElementById('results-info').innerHTML = 
+                                `🔍 <strong>${imagesWithUrls.length} resultado(s) para:</strong> "${searchTerm}" 
+                                <button class="reset-search" onclick="loadDefaultGallery()">Voltar ao início</button>`;
+                        } else {
+                            throw new Error('Nenhuma imagem encontrada para esta busca');
+                        }
+                    } else {
+                        throw new Error('Nenhum resultado encontrado');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    document.getElementById('images-container').innerHTML = 
+                        `<div class="error">${error.message}</div>`;
+                    document.getElementById('results-info').innerHTML = 
+                        `❌ <strong>Nenhum resultado para:</strong> "${searchTerm}" 
+                        <button class="reset-search" onclick="loadDefaultGallery()">Voltar ao início</button>`;
+                })
+                .finally(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    isLoading = false;
+                });
+        }
+
+        // Função para exibir imagens da NASA
+        function displayNASAImages(images) {
+            const container = document.getElementById('images-container');
+            container.innerHTML = '';
+
+            images.forEach(image => {
+                const block = document.createElement('div');
+                block.className = 'block';
+                
+                if (image.image_url) {
+                    block.innerHTML = `
+                        <a href="${image.image_url}" target="_blank" title="Abrir imagem em tamanho real">
+                            <img src="${image.image_url}" 
+                                 alt="${image.title}" 
+                                 width="300"
+                                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5BU0EgSW1hZ2UgTG9hZGluZy4uLjwvdGV4dD48L3N2Zz4='">
+                        </a>
+                        <div class="block-title">${image.title}</div>
+                        <div class="block-description">${image.description}</div>
+                    `;
+                } else {
+                    block.innerHTML = `
+                        <div class="image-placeholder">
+                            Imagem não disponível
+                        </div>
+                        <div class="block-title">${image.title}</div>
+                    `;
+                }
+                
+                container.appendChild(block);
+            });
+        }
+
+        // Função para definir termo de busca pelos botões de sugestão
+        function setSearchTerm(term) {
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = term;
+            searchNASAImages();
+        }
+
+        // Função para lidar com Enter na barra de pesquisa
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchNASAImages();
+            }
+        }
+
+        // Detectar navegador
+        function detectBrowser() {
+            const userAgent = navigator.userAgent;
+            let browserName;
+            
+            if (userAgent.includes("Firefox")) {
+                browserName = "Mozilla Firefox";
+            } else if (userAgent.includes("Chrome")) {
+                browserName = "Google Chrome";
+            } else if (userAgent.includes("Safari")) {
+                browserName = "Apple Safari";
+            } else if (userAgent.includes("Edge")) {
+                browserName = "Microsoft Edge";
+            } else {
+                browserName = "Seu Navegador";
+            }
+            
+            document.getElementById('browser-name').textContent = `Navegador: ${browserName}`;
+        }
+
+        // Recarregar galeria padrão a cada 10 minutos
+        setInterval(loadDefaultGallery, 600000);
+    </script>
 </body>
 
 </html>
