@@ -58,56 +58,54 @@ def image_to_base64(img_bytes):
 # 🔹 FUNÇÃO SIMULADA DE BUSCA
 # =========================================================
 import json
-
+'''
 def search_in_embeddings(query):
     query_lower = query.lower()
     results = []
 
-    # procurar o corpo celeste na query
     matched_body = next((body for body in NASA_APIS if body in query_lower), None)
 
     if matched_body:
         url = NASA_APIS[matched_body]
         try:
-            resp = requests.get(url, timeout=10).json()
+            resp = requests.get(url, timeout=10)
+            # Só chamar .json() se for JSON
+            try:
+                data = resp.json()
+            except ValueError:
+                data = None
 
-            if matched_body == "mars":
-                photos = resp.get("photos", [])[:5]
+            if matched_body == "mars" and data:
+                photos = data.get("photos", [])[:5]
                 for i, photo in enumerate(photos):
                     results.append({
                         "id": i+1,
                         "text": f"Foto de Marte - {photo['camera']['full_name']}",
                         "image_url": photo['img_src']
                     })
-
-            elif matched_body == "earth":
-                # EPIC API retorna várias imagens, vamos pegar as 5 últimas
-                for i, photo in enumerate(resp[:5]):
+            elif matched_body == "earth" and data:
+                for i, photo in enumerate(data[:5]):
                     image_url = f"https://epic.gsfc.nasa.gov/archive/natural/{photo['date'].replace('-', '/')}/png/{photo['image']}.png"
                     results.append({
                         "id": i+1,
                         "text": f"Foto da Terra - {photo['date']}",
                         "image_url": image_url
                     })
-
-            elif matched_body == "luna":
-                # exemplo usando APOD lunar
+            elif matched_body == "luna" and data:
                 results.append({
                     "id": 1,
-                    "text": f"Imagem Lunar",
-                    "image_url": resp.get("url")
+                    "text": "Imagem Lunar",
+                    "image_url": data.get("url")
                 })
-
             else:
+                # Se a resposta não for JSON ou não tiver dados
                 results.append({
                     "id": 1,
-                    "text": f"Imagem de {matched_body.capitalize()}",
+                    "text": f"Não foi possível obter imagens de {matched_body.capitalize()}",
                     "image_url": None
                 })
-
         except Exception as e:
             results.append({"id": 1, "text": f"Erro ao buscar imagens de {matched_body}: {str(e)}"})
-
     else:
         results.append({
             "id": 1,
@@ -116,7 +114,136 @@ def search_in_embeddings(query):
         })
 
     return results
+'''
+# =========================================================
+# 🔹 FUNÇÃO GENÉRICA DE BUSCA NA NASA
+# =========================================================
+'''
+def search_in_embeddings(query, max_results=5):
+    """
+    Busca imagens na NASA Image and Video Library ou APOD
+    com base no termo digitado pelo usuário.
+    """
+    query_lower = query.lower()
+    results = []
 
+    try:
+        if query_lower == "apod":
+            url = f"https://api.nasa.gov/planetary/apod?api_key={NASA_API_KEY}&count={max_results}"
+            
+            resp = requests.get(url, timeout=10).json()
+            for i, item in enumerate(resp):
+                results.append({
+                    "id": i+1,
+                    "text": item.get("title", "Sem título"),
+                    "image_url": item.get("url")
+                })
+        else:
+            # Busca genérica na NASA Image and Video Library
+            url = f"https://images-api.nasa.gov/search?q={query}&media_type=image"
+            resp = requests.get(url, timeout=10).json()
+            items = resp.get("collection", {}).get("items", [])[:max_results]
+
+            for i, item in enumerate(items):
+                data = item.get("data", [{}])[0]
+                links = item.get("links", [{}])
+                image_url = links[0].get("href") if links else None
+                results.append({
+                    "id": i+1,
+                    "text": data.get("title", "Sem título"),
+                    "image_url": image_url
+                })
+
+        if not results:
+            results.append({
+                "id": 1,
+                "text": f"Nenhuma imagem encontrada para '{query}'",
+                "image_url": None
+            })
+
+    except Exception as e:
+        results.append({
+            "id": 1,
+            "text": f"Erro ao buscar imagens NASA: {str(e)}",
+            "image_url": None
+        })
+
+    return results
+'''
+def search_in_embeddings(query, max_results=5):
+    """
+    Busca imagens reais na NASA Image and Video Library ou APOD,
+    filtrando concept art, IA e imagens de divulgação.
+    """
+    query_lower = query.lower()
+    results = []
+
+    try:
+        if query_lower == "apod":
+            url = f"https://api.nasa.gov/planetary/apod?api_key={NASA_API_KEY}&count={max_results}"
+            resp = requests.get(url, timeout=10).json()
+            for i, item in enumerate(resp):
+                results.append({
+                    "id": i+1,
+                    "text": item.get("title", "Sem título"),
+                    "image_url": item.get("url")
+                })
+        else:
+            url = f"https://images-api.nasa.gov/search?q={query}&media_type=image"
+            resp = requests.get(url, timeout=10).json()
+            items = resp.get("collection", {}).get("items", [])
+
+            for item in items:
+                data = item.get("data", [{}])[0]
+                title = data.get("title", "Sem título")
+                description = data.get("description", "").lower()
+                center = data.get("center", "")
+
+                # Filtro melhor: títulos + descrições + keywords suspeitas
+                forbidden_keywords = ["concept", "artist", "illustration", "ia", "render", "simulation", "mockup"]
+                if any(word in title.lower() for word in forbidden_keywords):
+                    continue
+                if any(word in description for word in forbidden_keywords):
+                    continue
+
+                # Centros de missões reais
+                if center not in ["JPL", "GSFC", "HQ"]:
+                    continue
+
+                # Links
+                links = item.get("links", [{}])
+                image_url = None
+                for link in links:
+                    if link.get("render") == "image" and link.get("href"):
+                        image_url = link.get("href")
+                        break
+                if not image_url:
+                    continue
+
+                results.append({
+                    "id": len(results)+1,
+                    "text": title,
+                    "image_url": image_url
+                })
+
+                if len(results) >= max_results:
+                    break
+
+        if not results:
+            results.append({
+                "id": 1,
+                "text": f"Nenhuma imagem real encontrada para '{query}'",
+                "image_url": None
+            })
+
+    except Exception as e:
+        results.append({
+            "id": 1,
+            "text": f"Erro ao buscar imagens NASA: {str(e)}",
+            "image_url": None
+        })
+
+    return results
 
 
 # =========================================================
