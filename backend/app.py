@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-from models import db, Annotation, SatelliteImage
+from .models import db, Annotation, SatelliteImage
 from geoalchemy2 import Geometry
 from sqlalchemy import text
 import base64
