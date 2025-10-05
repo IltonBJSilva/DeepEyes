@@ -30,6 +30,14 @@ CORS(app)
 # ----- REDIS -----
 #redis_client = redis.StrictRedis(host="localhost", port=6379, db=0, decode_responses=False)
 
+NASA_APIS = {
+    "mars": f"https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key={NASA_API_KEY}",
+    "earth": f"https://api.nasa.gov/EPIC/api/natural/images?api_key={NASA_API_KEY}",
+    "luna": f"https://api.nasa.gov/planetary/lunar/apod?api_key={NASA_API_KEY}",
+    # outros planetas podem ser puxados via JPL ou imagens públicas
+}
+
+
 # ----- DB -----
 db.init_app(app)
 with app.app_context():
@@ -55,39 +63,60 @@ def search_in_embeddings(query):
     query_lower = query.lower()
     results = []
 
-    # Exemplo: Marte
-    if "marte" in query_lower or "mars" in query_lower:
-        url = f"https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key={NASA_API_KEY}"
+    # procurar o corpo celeste na query
+    matched_body = next((body for body in NASA_APIS if body in query_lower), None)
+
+    if matched_body:
+        url = NASA_APIS[matched_body]
         try:
             resp = requests.get(url, timeout=10).json()
-            photos = resp.get("photos", [])[:5]  # pegar só os 5 primeiros
-            for i, photo in enumerate(photos):
+
+            if matched_body == "mars":
+                photos = resp.get("photos", [])[:5]
+                for i, photo in enumerate(photos):
+                    results.append({
+                        "id": i+1,
+                        "text": f"Foto de Marte - {photo['camera']['full_name']}",
+                        "image_url": photo['img_src']
+                    })
+
+            elif matched_body == "earth":
+                # EPIC API retorna várias imagens, vamos pegar as 5 últimas
+                for i, photo in enumerate(resp[:5]):
+                    image_url = f"https://epic.gsfc.nasa.gov/archive/natural/{photo['date'].replace('-', '/')}/png/{photo['image']}.png"
+                    results.append({
+                        "id": i+1,
+                        "text": f"Foto da Terra - {photo['date']}",
+                        "image_url": image_url
+                    })
+
+            elif matched_body == "luna":
+                # exemplo usando APOD lunar
                 results.append({
-                    "id": i+1,
-                    "text": f"Foto de Marte - {photo['camera']['full_name']}",
-                    "image_url": photo['img_src']
+                    "id": 1,
+                    "text": f"Imagem Lunar",
+                    "image_url": resp.get("url")
                 })
+
+            else:
+                results.append({
+                    "id": 1,
+                    "text": f"Imagem de {matched_body.capitalize()}",
+                    "image_url": None
+                })
+
         except Exception as e:
-            results.append({"id": 1, "text": f"Erro ao buscar imagens de Marte: {str(e)}"})
+            results.append({"id": 1, "text": f"Erro ao buscar imagens de {matched_body}: {str(e)}"})
 
-    # Exemplo: Terra
-    elif "terra" in query_lower or "earth" in query_lower:
-        # Simulação usando imagens de satélite públicas (Worldview)
-        results.append({
-            "id": 1,
-            "text": "Imagem simulada da Terra",
-            "image_url": "https://eoimages.gsfc.nasa.gov/images/imagerecords/57000/57730/world.topo.bathy.200412.3x5400x2700.jpg"
-        })
-
-    # Qualquer outra coisa
     else:
         results.append({
             "id": 1,
-            "text": f"Resultado simulado para '{query}'",
+            "text": f"Nenhuma imagem disponível para '{query}'",
             "image_url": None
         })
 
     return results
+
 
 
 # =========================================================
@@ -195,28 +224,28 @@ def fetch_nasa_data(dataset):
         return jsonify(eval(cached.decode("utf-8")))
 
     if dataset == "worldview":
-        url = ""
+        url = "https://worldview.earthdata.nasa.gov/"
         result = {"info": "Exploração visual da Terra (Worldview)", "url": url}
 
     elif dataset == "mars":
-        url = f""
+        url = f"https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key={NASA_API_KEY}"
         resp = requests.get(url).json()
         result = {"dataset": "Mars Reconnaissance Orbiter", "photos": resp.get("photos", [])[:5]}
 
     elif dataset == "tess":
-        url = ""
+        url = "https://tess.mit.edu/data/"
         result = {"dataset": "TESS", "info": "Informações sobre o satélite TESS", "url": url}
 
     elif dataset == "lunar":
-        url = ""
+        url = "https://lunar.gsfc.nasa.gov/"
         result = {"dataset": "Lunar Reconnaissance Orbiter", "url": url}
 
     elif dataset == "solar_system_treks":
-        url = ""
+        url = "https://trek.nasa.gov/"
         result = {"dataset": "Solar System Treks", "url": url}
 
     elif dataset == "earthdata":
-        url = ""
+        url = "https://earthdata.nasa.gov/"
         result = {"dataset": "EarthData", "url": url}
 
     else:

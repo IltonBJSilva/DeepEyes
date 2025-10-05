@@ -9,4 +9,4 @@ SQLALCHEMY_DATABASE_URI = os.environ.get(
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # Chave secreta
-SECRET_KEY = os.environ.get("SECRET_KEY", "deepeyes-secret")
+api_nasa = os.environ.get("api_nasa", "deepeyes-secret")
