@@ -1,19 +1,19 @@
-body {
-            background: #0d1117;
-            color: #f8f9fa;
-        }
-        .card {
-            background: #1c1f26;
-            border: none;
-        }
-        .btn-primary {
-            background-color: #3b82f6;
-            border: none;
-        }
-        .btn-success {
-            background-color: #10b981;
-            border: none;
-        }
-        input::placeholder {
-            color: #adb5bd;
-        }
+.minha-navbar {
+  background-image: url('../../assets/slayer-navbar.jpg'); /* nome simplificado */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: white;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.minha-navbar ul.nav-pills .nav-link {
+  color: white;
+}
+
+.minha-navbar ul.nav-pills .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+}
