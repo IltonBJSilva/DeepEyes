@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from geoalchemy2 import Geometry
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
 
 db = SQLAlchemy()
 
@@ -12,16 +13,17 @@ class Annotation(db.Model):
     image_id = db.Column(db.Integer, db.ForeignKey("satellite_images.id"), nullable=True)
 
 
-# ----- Tabela de imagens de satélite -----
+
 class SatelliteImage(db.Model):
     __tablename__ = "satellite_images"
     id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String)
     location = db.Column(Geometry("POINT"))
-    description = db.Column(db.String(500))
     timestamp = db.Column(db.DateTime)
-    source = db.Column(db.String(100))
-    url = db.Column(db.String(300), nullable=True)  # link da imagem
-    annotations = db.relationship("Annotation", backref="image", lazy=True)
+    source = db.Column(db.String)
+    url = db.Column(db.String)
+    embedding = db.Column(JSON)  # Campo para embedding do texto da descrição
+
 
 
 
