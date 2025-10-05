@@ -1,8 +1,12 @@
 import os
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_PATH = os.path.join(BASE_DIR, "../data/deep_eyes.db")
+# URL do Neon PostgreSQL
+SQLALCHEMY_DATABASE_URI = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://neondb_owner:npg_iXUr9zeV1xEa@ep-weathered-fog-acqya7nv-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+)
 
-SQLALCHEMY_DATABASE_URI = f"sqlite:///{DB_PATH}"  # trocar para MySQL se quiser
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Chave secreta
 SECRET_KEY = os.environ.get("SECRET_KEY", "deepeyes-secret")
