@@ -1,9 +1,14 @@
 from flask import Flask, render_template, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from .models import db, Annotation, SatelliteImage
+from geoalchemy2 import Geometry
+from sqlalchemy import text
 
-# ----- CONFIGURAÇÃO SIMULADA -----
-SQLALCHEMY_DATABASE_URI = "sqlite:///test.db"
+# ----- CONFIGURAÇÃO COM NEON ----- 
+SQLALCHEMY_DATABASE_URI = (
+    "postgresql://neondb_owner:npg_iXUr9zeV1xEa@ep-weathered-fog-acqya7nv-pooler.sa-east-1.aws.neon.tech/neondb"
+    "?sslmode=require&channel_binding=require"
+)
 SECRET_KEY = "teste123"
 
 # ----- APP FLASK -----
@@ -16,23 +21,23 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# ----- DB & CORS -----
-db = SQLAlchemy(app)
+# ----- CORS -----
 CORS(app)
 
-# ----- MODELO -----
-class Annotation(db.Model):
-    __tablename__ = "annotations"
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(500))
+# ----- INICIALIZAÇÃO DO DB -----
+db.init_app(app)
+
+with app.app_context():
+    # Cria extensão PostGIS se ainda não existir
+    with db.engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+        conn.commit()
+
+    db.create_all()
 
 # ----- FUNÇÃO SIMULADA DE BUSCA -----
 def search_in_embeddings(query):
     return [{"id": 1, "text": f"Resultado simulado para '{query}'"}]
-
-# ⚡ Cria tabelas no contexto do app
-with app.app_context():
-    db.create_all()
 
 # ----- ROTAS FRONTEND -----
 @app.route("/")
@@ -61,6 +66,30 @@ def annotations_route():
         db.session.add(new_annotation)
         db.session.commit()
         return jsonify({"status": "annotation added"})
+
+@app.route("/api/images", methods=["GET", "POST"])
+def images_route():
+    if request.method == "GET":
+        images = SatelliteImage.query.all()
+        return jsonify([{
+            "id": i.id,
+            "description": i.description,
+            "location": str(i.location),
+            "timestamp": i.timestamp,
+            "source": i.source
+        } for i in images])
+
+    elif request.method == "POST":
+        data = request.get_json()
+        new_image = SatelliteImage(
+            description=data.get("description"),
+            location=f"POINT({data['lon']} {data['lat']})",
+            timestamp=data.get("timestamp"),
+            source=data.get("source")
+        )
+        db.session.add(new_image)
+        db.session.commit()
+        return jsonify({"status": "image added"})
 
 # ----- RODAR LOCAL -----
 if __name__ == "__main__":
