@@ -163,7 +163,6 @@ def search_in_embeddings(query, max_results=5):
 
 
 # =========================================================
-<<<<<<< HEAD
 # 🔹 FRONTEND
 # =========================================================
 @app.route("/")
@@ -181,7 +180,6 @@ def health_check():
 # 🔹 API SEARCH
 =======
 # 🔹 ENDPOINTS
->>>>>>> 360d56fb8695fdf029e0ec6cef48bd3028e73802
 # =========================================================
 @app.route("/api/search", methods=["GET"])
 def search():
