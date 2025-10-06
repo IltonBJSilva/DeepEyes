@@ -221,6 +221,14 @@
             border-color: #888;
             color: #888;
         }
+        .site-logo {
+            position: absolute;
+            top: 20px;
+            left: 20px; /* agora está no canto superior esquerdo */
+            width: 120px; /* tamanho médio */
+            height: auto;
+            z-index: 100;
+        }
 
         /* 🔭 Button to access /page2 */
         .explore-btn {
@@ -248,6 +256,8 @@
 
 <body>
     <div class="container">
+        <img src="../static/assets/logo.PNG" alt="Logo" class="site-logo">
+
         <div class="title">From Science to Interactive Discovery</div>
         <div class="subtitle">Exploring the Universe in Terapixels</div>
         <div class="search-text">Search for craters, storms, constellations...</div>
