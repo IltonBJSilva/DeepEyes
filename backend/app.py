@@ -105,27 +105,36 @@ def nasa_gallery():
 @app.route("/api/nasa-random", methods=["GET"])
 def nasa_random_image():
     """
-    Retorna uma imagem aleatória da NASA
+    Retorna uma imagem do APOD (NASA Astronomy Picture of the Day).
+    Se for passada uma data (?date=YYYY-MM-DD), retorna a imagem daquele dia.
     """
     try:
-        # Busca uma imagem aleatória usando APOD
-        apod_data = requests.get(f"https://api.nasa.gov/planetary/apod?api_key={NASA_API_KEY}").json()
-        
-        if isinstance(apod_data, list):
-            apod_data = apod_data[0]
-            
-        return jsonify({
-            "image": {
-                "id": "random_apod",
-                "title": apod_data.get("title", "NASA Astronomy Picture"),
-                "image_url": apod_data.get("url"),
-                "description": apod_data.get("explanation", "NASA Image")[:150] + "...",
-                "type": "apod"
-            }
-        })
-    
+        date = request.args.get("date", "")  # pega data opcional
+        params = {"api_key": NASA_API_KEY}
+        if date:
+            params["date"] = date  # adiciona o parâmetro de data
+
+        # Requisição à API APOD da NASA
+        resp = requests.get("https://api.nasa.gov/planetary/apod", params=params, timeout=10)
+        data = resp.json()
+
+        # Monta resposta JSON
+        image_data = {
+            "id": "apod_custom",
+            "title": data.get("title", "NASA Astronomy Picture"),
+            "image_url": data.get("url"),
+            "description": data.get("explanation", "NASA Image")[:200] + "...",
+            "type": "apod",
+            "date": data.get("date", date)
+        }
+
+        return jsonify({"image": image_data})
+
     except Exception as e:
         return jsonify({"error": str(e)})
+
+
+
 
 @app.route("/api/redis-test")
 def redis_test():
@@ -308,6 +317,10 @@ def home():
 def feature():
     return render_template("index.html")
 
+@app.route("/page2")
+def page2():
+    # Esta nova rota renderiza a segunda página
+    return render_template("pages2.html")
 
 # =========================================================
 # 🔹 HEALTH CHECK

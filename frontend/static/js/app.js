@@ -118,3 +118,25 @@ document.getElementById("searchBox").addEventListener("keydown", function(event)
         doSearch();
     }
 });
+
+
+// ======= Load NASA Image Dynamically =======
+fetch('/api/nasa-random')
+  .then(response => response.json())
+  .then(data => {
+    const planet = document.getElementById('planet');
+    const image = data.image?.image_url;
+    const title = data.image?.title || "NASA Image";
+    
+    if (image) {
+      planet.src = image;
+      planet.alt = title;
+      planet.style.display = 'block'; // mostra quando carregar
+    } else {
+      planet.style.display = 'none';
+      console.warn("Nenhuma imagem encontrada na API NASA");
+    }
+  })
+  .catch(err => {
+    console.error("Erro ao buscar imagem da NASA:", err);
+  });

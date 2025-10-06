@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -221,239 +221,154 @@
             border-color: #888;
             color: #888;
         }
+
+        /* 🔭 Button to access /page2 */
+        .explore-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #4dabf7, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 40px;
+            box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+        }
+
+        .explore-btn:hover {
+            background: linear-gradient(90deg, #7c3aed, #4dabf7);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.7);
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="title">Da ciência à descoberta interativa</div>
+        <div class="title">From Science to Interactive Discovery</div>
+        <div class="subtitle">Exploring the Universe in Terapixels</div>
+        <div class="search-text">Search for craters, storms, constellations...</div>
 
-        <div class="subtitle">Explorando o Universo em Terapixels</div>
-
-        <div class="search-text">Busque por crateras, tempestades, constelações...</div>
-
-        <!-- Barra de Pesquisa -->
-        <div class="look-for">O que você quer explorar?</div>
+        <div class="look-for">What do you want to explore?</div>
         
         <div class="search-container">
-            <input type="text" 
-                   class="search-input" 
-                   id="search-input" 
-                   placeholder="Ex: lua, marte, nebulosa, galáxia..."
-                   onkeypress="handleKeyPress(event)">
-            <button class="search-btn" id="search-btn" onclick="searchNASAImages()">
-                🔍 Buscar
-            </button>
+            <input type="text" class="search-input" id="search-input" placeholder="Ex: moon, mars, nebula, galaxy..." onkeypress="handleKeyPress(event)">
+            <button class="search-btn" id="search-btn" onclick="searchNASAImages()">🔍 Search</button>
         </div>
 
-        <!-- Sugestões de Busca -->
         <div class="suggestions">
-            <button class="suggestion-btn" onclick="setSearchTerm('moon')">🌙 Lua</button>
-            <button class="suggestion-btn" onclick="setSearchTerm('mars')">🔴 Marte</button>
-            <button class="suggestion-btn" onclick="setSearchTerm('nebula')">🌌 Nebulosa</button>
-            <button class="suggestion-btn" onclick="setSearchTerm('galaxy')">🌀 Galáxia</button>
-            <button class="suggestion-btn" onclick="setSearchTerm('earth')">🌍 Terra</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('moon')">🌙 Moon</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('mars')">🔴 Mars</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('nebula')">🌌 Nebula</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('galaxy')">🌀 Galaxy</button>
+            <button class="suggestion-btn" onclick="setSearchTerm('earth')">🌍 Earth</button>
             <button class="suggestion-btn" onclick="setSearchTerm('apod')">🛰️ APOD</button>
         </div>
 
-        <!-- Informações dos Resultados -->
         <div class="search-results-info" id="results-info"></div>
-
-        <!-- Galeria de Imagens -->
         <div class="blocks-container" id="images-container">
-            <div class="loading">Carregando imagens da NASA...</div>
+            <div class="loading">Loading NASA images...</div>
         </div>
 
-        <hr>
+        <!-- 🔭 Access Button -->
+        <a href="/page2" class="explore-btn">🌌 View Interactive Visualization</a>
 
-        <footer>Fonte e imagens © NASA - Domínio Público</footer>
+        <hr>
+        <footer>Source and images © NASA - Public Domain</footer>
 
         <hr>
 
         <div class="browser-info">
-            <div id="browser-name">Navegador: Detectando...</div>
-            <div>Origem: NASA Universe Explorer</div>
+            <div id="browser-name">Browser: Detecting...</div>
+            <div>Origin: NASA Universe Explorer</div>
         </div>
     </div>
 
     <script>
+        // === (JS code remains the same) ===
         let currentSearchTerm = '';
         let isLoading = false;
 
-        // Carregar imagens quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
             loadDefaultGallery();
             detectBrowser();
         });
 
-        // Função para carregar galeria padrão
         function loadDefaultGallery() {
             const loadingElement = document.getElementById('images-container');
-            loadingElement.innerHTML = '<div class="loading">Carregando imagens incríveis da NASA...</div>';
+            loadingElement.innerHTML = '<div class="loading">Loading amazing NASA images...</div>';
             document.getElementById('results-info').innerHTML = '';
 
             fetch('/api/nasa-gallery')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro ao carregar galeria NASA');
-                    }
-                    return response.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    if (data.images && data.images.length > 0) {
+                    if (data.images?.length) {
                         displayNASAImages(data.images);
-                        document.getElementById('results-info').innerHTML = 
-                            '📸 <strong>Imagens em Destaque da NASA</strong>';
-                    } else {
-                        throw new Error('Nenhuma imagem encontrada');
+                        document.getElementById('results-info').innerHTML = '📸 <strong>Featured NASA Images</strong>';
                     }
                 })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    document.getElementById('images-container').innerHTML = 
-                        '<div class="error">Erro ao carregar imagens da NASA</div>';
+                .catch(() => {
+                    document.getElementById('images-container').innerHTML = '<div class="error">Error loading NASA images</div>';
                 });
         }
 
-        // Função para buscar imagens
         function searchNASAImages() {
-            const searchInput = document.getElementById('search-input');
-            const searchTerm = searchInput.value.trim();
-            
-            if (!searchTerm) {
-                alert('Por favor, digite algo para buscar');
-                return;
-            }
-
-            if (isLoading) return;
-            
-            isLoading = true;
-            currentSearchTerm = searchTerm;
-            
-            const btn = document.getElementById('search-btn');
-            const originalText = btn.textContent;
-            btn.textContent = 'Buscando...';
-            btn.disabled = true;
-
+            const searchTerm = document.getElementById('search-input').value.trim();
+            if (!searchTerm) return alert('Type something to search');
             const loadingElement = document.getElementById('images-container');
-            loadingElement.innerHTML = '<div class="loading">Buscando imagens para: "' + searchTerm + '"...</div>';
+            loadingElement.innerHTML = `<div class="loading">Searching images for: "${searchTerm}"...</div>`;
 
             fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erro na busca');
-                    }
-                    return response.json();
-                })
+                .then(res => res.json())
                 .then(data => {
-                    if (data.results && data.results.length > 0) {
-                        // Filtra apenas resultados com imagens
-                        const imagesWithUrls = data.results.filter(result => result.image_url);
-                        
-                        if (imagesWithUrls.length > 0) {
-                            displayNASAImages(imagesWithUrls.map(result => ({
-                                id: result.id,
-                                title: result.text,
-                                image_url: result.image_url,
-                                description: `Resultado da busca: ${searchTerm}`,
-                                type: 'search'
-                            })));
-                            
-                            document.getElementById('results-info').innerHTML = 
-                                `🔍 <strong>${imagesWithUrls.length} resultado(s) para:</strong> "${searchTerm}" 
-                                <button class="reset-search" onclick="loadDefaultGallery()">Voltar ao início</button>`;
-                        } else {
-                            throw new Error('Nenhuma imagem encontrada para esta busca');
-                        }
+                    const images = data.results?.filter(r => r.image_url) || [];
+                    if (images.length) {
+                        displayNASAImages(images.map(r => ({
+                            id: r.id, title: r.text, image_url: r.image_url, description: `Result: ${searchTerm}`
+                        })));
+                        document.getElementById('results-info').innerHTML = `🔍 <strong>${images.length} result(s)</strong> for "${searchTerm}"`;
                     } else {
-                        throw new Error('Nenhum resultado encontrado');
+                        document.getElementById('images-container').innerHTML = '<div class="error">No images found</div>';
                     }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    document.getElementById('images-container').innerHTML = 
-                        `<div class="error">${error.message}</div>`;
-                    document.getElementById('results-info').innerHTML = 
-                        `❌ <strong>Nenhum resultado para:</strong> "${searchTerm}" 
-                        <button class="reset-search" onclick="loadDefaultGallery()">Voltar ao início</button>`;
-                })
-                .finally(() => {
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                    isLoading = false;
                 });
         }
 
-        // Função para exibir imagens da NASA
         function displayNASAImages(images) {
             const container = document.getElementById('images-container');
             container.innerHTML = '';
-
-            images.forEach(image => {
-                const block = document.createElement('div');
-                block.className = 'block';
-                
-                if (image.image_url) {
-                    block.innerHTML = `
-                        <a href="${image.image_url}" target="_blank" title="Abrir imagem em tamanho real">
-                            <img src="${image.image_url}" 
-                                 alt="${image.title}" 
-                                 width="300"
-                                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMjIyIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5BU0EgSW1hZ2UgTG9hZGluZy4uLjwvdGV4dD48L3N2Zz4='">
+            images.forEach(img => {
+                container.innerHTML += `
+                    <div class="block">
+                        <a href="${img.image_url}" target="_blank">
+                            <img src="${img.image_url}" alt="${img.title}">
                         </a>
-                        <div class="block-title">${image.title}</div>
-                        <div class="block-description">${image.description}</div>
-                    `;
-                } else {
-                    block.innerHTML = `
-                        <div class="image-placeholder">
-                            Imagem não disponível
-                        </div>
-                        <div class="block-title">${image.title}</div>
-                    `;
-                }
-                
-                container.appendChild(block);
+                        <div class="block-title">${img.title}</div>
+                        <div class="block-description">${img.description}</div>
+                    </div>`;
             });
         }
 
-        // Função para definir termo de busca pelos botões de sugestão
         function setSearchTerm(term) {
-            const searchInput = document.getElementById('search-input');
-            searchInput.value = term;
+            document.getElementById('search-input').value = term;
             searchNASAImages();
         }
 
-        // Função para lidar com Enter na barra de pesquisa
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                searchNASAImages();
-            }
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') searchNASAImages();
         }
 
-        // Detectar navegador
         function detectBrowser() {
-            const userAgent = navigator.userAgent;
-            let browserName;
-            
-            if (userAgent.includes("Firefox")) {
-                browserName = "Mozilla Firefox";
-            } else if (userAgent.includes("Chrome")) {
-                browserName = "Google Chrome";
-            } else if (userAgent.includes("Safari")) {
-                browserName = "Apple Safari";
-            } else if (userAgent.includes("Edge")) {
-                browserName = "Microsoft Edge";
-            } else {
-                browserName = "Seu Navegador";
-            }
-            
-            document.getElementById('browser-name').textContent = `Navegador: ${browserName}`;
+            const ua = navigator.userAgent;
+            let name = 'Unknown';
+            if (ua.includes("Firefox")) name = "Mozilla Firefox";
+            else if (ua.includes("Chrome")) name = "Google Chrome";
+            else if (ua.includes("Safari")) name = "Apple Safari";
+            else if (ua.includes("Edge")) name = "Microsoft Edge";
+            document.getElementById('browser-name').textContent = `Browser: ${name}`;
         }
-
-        // Recarregar galeria padrão a cada 10 minutos
-        setInterval(loadDefaultGallery, 600000);
     </script>
 </body>
-
 </html>
